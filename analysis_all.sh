@@ -6,7 +6,8 @@ T_end=1.600
 dT=0.050
 
 # Output file
-output="potts_thermal_q2L32.dat"
+#output="potts_thermal_q2L32.dat"
+output="gen_thermal_q2L32.dat"
 
 # Clear previous output and write header
 echo "# T  e  m  cv  chi" > "$output"
@@ -24,7 +25,8 @@ while (( $(echo "$T <= $T_end" | bc -l) )); do
 
     echo "Processing T = $T_formatted"
 
-    python analysis.py ./2dPotts_L32 potts_configs_q2L32T "$T_formatted" \
+    #python analysis.py ./2dPotts_L32 potts_configs_q2L32T "$T_formatted" \
+    python analysis.py ./q2L32_gen gen_configs_q2L32T "$T_formatted" \
         > "temp_results/result_T${T_formatted}.dat"
 
     # Append result to final file
