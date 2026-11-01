@@ -26,7 +26,7 @@ gnuplot script `plot` make the plot by
 ```bash
 gnuplot plot
 ```
-For example, for `q=2` and `L=32`, Metropolis or Wolff simulation with `20000` equilibration cycles and saving `20000` snapshots every `100` MC cycles (which takes about 2-3 hours for each temperature as of 2026)
+For example, for `q=2` and `L=32`, Metropolis or Wolff simulation with `20000` equilibration cycles and saving `20000` snapshots every `100` MC cycles (which takes about 3 hours per temperature as of 2026)
 ![Monte Carlo thermal quantities](thermalMC.png)
 
 `MCconfigsCheck.ipynb` is a Jupyter notebook to help visualize the generated MC configurations.
