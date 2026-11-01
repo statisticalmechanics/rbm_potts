@@ -4,7 +4,7 @@
 ```bash
 python potts_MC_T.py 0.85
 ```
-which will save the configuration snapshots as `.npy` file in current directory.
+which will save the configuration snapshots as `.npy` file in current directory. In this file, each configuration is unfolded into one row with integer spin state `s = 0, 1, ..., q-1`. Note that, single-flip Metropolis move tends to generate symmetry-broken states at low temperatures while Wolff tends to make a good balance of different states.
 
 To run MC over a range of temperatures (in the background), use
 ```bash
@@ -26,7 +26,7 @@ gnuplot script `plot` make the plot by
 ```bash
 gnuplot plot
 ```
-For example, for `q=2` and `L=32`, Metropolis or Wolff simulation with `20000` equilibration cycles and saving `20000` snapshots every `100` MC cycles
+For example, for `q=2` and `L=32`, Metropolis or Wolff simulation with `20000` equilibration cycles and saving `20000` snapshots every `100` MC cycles (which takes about 2-3 hours for each temperature as of 2026)
 ![Monte Carlo thermal quantities](thermalMC.png)
 
 `MCconfigsCheck.ipynb` is a Jupyter notebook to help visualize the generated MC configurations.
