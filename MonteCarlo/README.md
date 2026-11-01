@@ -26,6 +26,6 @@ gnuplot script `plot` make the plot by
 ```bash
 gnuplot plot
 ```
-
+For example, for `q=2` and `L=32`, Metropolis or Wolff simulation with `20000` equilibration cycles and saving `20000` snapshots every `100` MC cycles
 ![Monte Carlo thermal quantities](thermalMC.png)
 
