@@ -53,6 +53,9 @@ def main():
   rho = np.stack([np.mean(configs == a, axis=(1, 2)) for a in range(q)], axis=1)
   # Scalar magnetization
   m = (q * np.max(rho, axis=1) - 1) / (q - 1)
+    
+  filename = os.path.join(input_dir, "gen_ME_q2L32T{:.3f}.txt".format(T))
+  np.savetxt(filename,np.column_stack((m, e)))
 
   # ==========================================
   # 3. Thermal averages
