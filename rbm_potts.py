@@ -280,7 +280,7 @@ def main():
     Tc = 1.0 / np.log(1.0 + np.sqrt(q))
     print('q =', q, 'and Tc =', Tc)
 
-    path = './2dPotts_L32/'
+    path = './q2L32_mc/'
     filename = os.path.join(path, "potts_configs_q2L32T{:.3f}.npy".format(T))
     configs = np.load(filename)
     print(configs.shape)
@@ -315,34 +315,75 @@ def main():
     rbm = RBM_multinomial(C, n_visible, n_hidden, mf).to(device)
 
     # define training hyperparameters
-    n_epochs = 500
-    lr = 0.01
-    k = 10
-    pcd = False
+    n_epochs = 10000
+    lr = 0.0001
+    k = 5
+    pcd = True
     mc = 'gibbs'  # gibbs or langevin
     epsilon = 0.05  # langevin step size
     cdtype = 'pcd' if pcd else 'cd'
 
     history = train(rbm, train_loader, pcd, mc, k, epsilon, lr, n_epochs)
 
+    path = './q2L32_gen/'
+    os.makedirs(path, exist_ok=True)
+    filename = os.path.join(path, "gen_configs_q2L32T{:.3f}.npy".format(T))
+
+    save_memory = True # generate 20000 or 200 configurations at once
+
     # Generate starting from a random pixel distribution or a random hidden unit distribution.
     # Commented out lines are for different initializations.
-    n_sample = 20000
-    ph = 0.5  # Bernoulli probability
-    h0 = torch.bernoulli(torch.ones(n_sample, n_hidden)*ph).float().to(device)  # bernoulli 0,1 with probability ph
-    X0 = rbm.h_to_v(h0)
-    # X0 = torch.randint(1, (n_sample, n_visible),requires_grad=False).float().to(device)  # binary 0,1
-    # X0 = torch.rand((n_sample, n_visible),requires_grad=False).float().to(device)  # uniform [0,1]
+    if save_memory == False:
+        n_sample = 20000
+        ph = 0.5  # Bernoulli probability
+        h0 = torch.bernoulli(torch.ones(n_sample, n_hidden)*ph).float().to(device)  # bernoulli 0,1 with probability ph
+        X0 = rbm.h_to_v(h0)
+        # X0 = torch.randint(1, (n_sample, n_visible),requires_grad=False).float().to(device)  # binary 0,1
+        # X0 = torch.rand((n_sample, n_visible),requires_grad=False).float().to(device)  # uniform [0,1]
 
-    # Use Gibbs sampling for generation
-    with torch.no_grad():  # no graph, avoid GPU memory growth
-        X_gen = rbm.forward(X0, mc='gibbs', k=1000, epsilon=0.01).detach()  # gibbs or manual diff langevin does not need graph
-    # X_gen is in one-hot encoding
+        # Use Gibbs sampling for generation
+        with torch.no_grad():  # no graph, avoid GPU memory growth
+            X_gen = rbm.forward(X0, mc='gibbs', k=1000, epsilon=0.01).detach()  # gibbs or manual diff langevin does not need graph
+        # X_gen is in one-hot encoding
 
-    X_cat = X_gen.view(-1,n_visible,C).argmax(dim=-1) # categorical X
-    path = './q2L32_gen/'
-    filename = os.path.join(path, "gen_configs_q2L32T{:.3f}.npy".format(T))
-    np.save(filename, X_cat.detach().cpu().numpy())
+        X_cat = X_gen.view(-1,n_visible,C).argmax(dim=-1) # categorical X
+        np.save(filename, X_cat.detach().cpu().numpy())
+
+    elif save_memory == True:
+        n_sample = 200
+        n_batches = 100
+        ph = 0.5  # Bernoulli probability
+        # Create memory-mapped .npy file
+        X_cat_all = np.lib.format.open_memmap(filename, mode='w+', dtype=np.int64, shape=(n_sample * n_batches, n_visible))
+
+        with torch.no_grad():
+           for i in range(n_batches):
+               # Initialize 200 samples
+               h0 = torch.bernoulli(
+                   torch.ones(n_sample, n_hidden, device=device) * ph
+               ).float()
+               X0 = rbm.h_to_v(h0)
+
+               # Gibbs sampling
+               X_gen = rbm.forward(X0, mc='gibbs', k=1000, epsilon=0.01).detach()
+
+               # Convert one-hot encoding to categorical configurations
+               X_cat = X_gen.view(-1, n_visible, C).argmax(dim=-1)
+
+               # Write directly to file
+               start = i * n_sample
+               end = start + n_sample
+
+               X_cat_all[start:end] = X_cat.cpu().numpy()
+
+               # Flush batch to disk
+               X_cat_all.flush()
+
+               #print(f"Batch {i+1}/{n_batches} saved: samples {start} to {end-1}")
+
+        # Release memory map
+        del X_cat_all
+        #print(f"All {n_sample * n_batches} configurations saved to {filename}")
 
 if __name__ == "__main__":
     main()
